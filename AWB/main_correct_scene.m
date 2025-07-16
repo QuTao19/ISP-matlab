@@ -2,6 +2,8 @@
 % main_correct_scene.m - 使用已建立的白点曲线对新场景进行白平衡
 % =========================================================================
 clear; clc; close all;
+width = 1920;
+height = 1080;
 
 %% 1. 加载校准数据
 if ~exist('calibration_data.mat', 'file')
@@ -12,8 +14,11 @@ load('calibration_data.mat', 'p_coeffs');
 
 %% 2. 加载待校正的图像
 % TODO: 将此路径替换为您想要校正的图像的路径
-scene_image_path = 'correct/A_source_image.jpg';
-original_img = im2double(imread(scene_image_path));
+scene_image_path = 'after_demosaic/A_source_image.raw';
+fid = fopen("after_demosaic\A_source_image.raw","r");
+original_img_vec = fread(fid, width * height * 3, 'uint16=>uint16');
+original_img = reshape(original_img_vec, [height, width, 3]);
+% original_img = im2double(imread(scene_image_path));
 
 %% 3. 执行白平衡校正
 fprintf('开始进行白平衡校正...\n');

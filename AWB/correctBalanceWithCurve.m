@@ -2,18 +2,21 @@ function corrected_img = correctBalanceWithCurve(img, curve_coeffs)
 % 使用白点色温曲线对图像进行自动白平衡校正。
 %
 % 输入:
-%   img - 待校正的原始图像 (RGB, double类型, 范围 [0, 1])
+%   img - 待校正的原始图像 (RGB, uint16类型)
 %   curve_coeffs - 校准得到的白点曲线多项式系数
 %
 % 输出:
-%   corrected_img - 白平衡校正后的图像
+%   corrected_img - 白平衡校正后的图像 (uint16类型)
+
+    % 将输入的 uint16 图像转换为 double 类型 [0, 1] 以便进行计算
+    img_double = im2double(img);
 
     %% 1. 估计当前场景的光源色度
     % 这里我们使用一个简单但常用的 "Gray World" (灰度世界) 假设的变种。
     % 我们计算图像中所有像素的平均 R, G, B 值来估计光源颜色。
     % 其他方法如 "White Patch" (完美反射体) 或 "Gray Edge" 也可以使用。
     
-    illuminant_estimate = squeeze(mean(mean(img, 1), 2))'; % 得到 [R_avg, G_avg, B_avg]
+    illuminant_estimate = squeeze(mean(mean(img_double, 1), 2))'; % 得到 [R_avg, G_avg, B_avg]
     
     % 转换到 rg 色度空间
     est_r = illuminant_estimate(1) / illuminant_estimate(2);
@@ -45,16 +48,21 @@ function corrected_img = correctBalanceWithCurve(img, curve_coeffs)
     gains = [gain_R, gain_G, gain_B];
     
     % 可选：对增益进行归一化，防止校正后图像整体变亮或变暗
-    gains = gains / norm(gains); % 或者 gains = gains / gains(2)
+    % 注意：这里的归一化策略可能需要根据实际效果调整
+    gains = gains / gains(2); % 以G通道为基准进行归一化
     
     %% 4. 应用增益到整个图像
-    corrected_img = img;
-    corrected_img(:,:,1) = corrected_img(:,:,1) * gains(1);
-    corrected_img(:,:,2) = corrected_img(:,:,2) * gains(2);
-    corrected_img(:,:,3) = corrected_img(:,:,3) * gains(3);
+    corrected_img_double = img_double;
+    corrected_img_double(:,:,1) = corrected_img_double(:,:,1) * gains(1);
+    corrected_img_double(:,:,2) = corrected_img_double(:,:,2) * gains(2);
+    corrected_img_double(:,:,3) = corrected_img_double(:,:,3) * gains(3);
+
+    %% 5. 裁剪像素值并转换回 uint16
+    % 首先裁剪到 [0, 1] 范围
+    corrected_img_double(corrected_img_double > 1) = 1;
+    corrected_img_double(corrected_img_double < 0) = 0;
     
-    %% 5. 裁剪像素值到 [0, 1] 范围
-    corrected_img(corrected_img > 1) = 1;
-    corrected_img(corrected_img < 0) = 0;
+    % 将 double [0, 1] 图像转换回 uint16 [0, 65535]
+    corrected_img = im2uint16(corrected_img_double);
 
 end

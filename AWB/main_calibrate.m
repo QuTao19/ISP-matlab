@@ -2,20 +2,22 @@
 % main_calibrate.m - 建立相机白点色温曲线
 % =========================================================================
 clear; clc; close all;
-
+width = 1920;
+height = 1080;
 %% 1. 定义常量和参数
 
 % TODO: 请根据您的文件存放位置修改这些路径
 imagePaths = {
-    'path/A_source_image.jpg', ...
-    'path/TL84_source_image.jpg', ...
-    'path/CWF_source_image.jpg', ...
-    'path/D50_source_image.jpg', ...
-    'path/D65_source_image.jpg', ...
-    'path/D75_source_image.jpg'  % 假设是D75
+    'after_demosaic/A_source_image.raw', ...
+    'after_demosaic/TL84_source_image.raw', ...
+    'after_demosaic/CWF_source_image.raw', ...
+    'after_demosaic/D50_source_image.raw', ...
+    'after_demosaic/D65_source_image.raw', ...
+    'after_demosaic/D75_source_image.raw'
 };
 
 illuminantNames = {'A', 'TL84', 'CWF', 'D50', 'D65', 'D75'};
+
 
 % TODO: 这是非常重要的一步！
 % 您需要使用 GIMP, Photoshop, 或者 MATLAB 的 imrect 工具来手动确定
@@ -37,44 +39,44 @@ fprintf('开始从校准图像中提取白点...\n');
 numImages = length(imagePaths);
 whitePoints = zeros(numImages, 3); % 用于存储 [R, G, B]
 
-% for i = 1:numImages
-%     fprintf('处理图像: %s\n', illuminantNames{i});
-%     whitePoints(i, :) = extractGrayPatchValues(imagePaths{i}, grayPatchRects);
-% end
-
 for i = 1:numImages
     fprintf('处理图像: %s\n', illuminantNames{i});
-    
-    % ======================================================
-    % --- 新增的可视化代码开始 ---
-    % 为了调试，读取并显示当前图像，并在其上绘制定义的矩形框
-    
-    img_for_display = imread(imagePaths{i});
-    
-    figure; % 为每一张校准图创建一个新的图形窗口
-    imshow(img_for_display);
-    hold on;
-    
-    % 设置标题，方便辨认
-    title(['调试视图: ' illuminantNames{i} ' - 灰色块选区'], 'FontSize', 14);
-    
-    % 循环遍历所有灰色块的定义，并用红色虚线框画出来
-    for j = 1:length(grayPatchRects)
-        rectangle('Position', grayPatchRects{j}, ...
-                  'EdgeColor', 'r', ...      % 框的颜色为红色
-                  'LineWidth', 2, ...         % 线宽为2
-                  'LineStyle', '--');       % 线型为虚线
-    end
-    
-    hold off;
-    drawnow; % 强制MATLAB立即更新并显示图像窗口
-    
-    % --- 新增的可视化代码结束 ---
-    % ======================================================
-
-    % 调用函数提取白点值的代码保持不变
-    whitePoints(i, :) = extractGrayPatchValues(imagePaths{i}, grayPatchRects);
+    whitePoints(i, :) = extractGrayPatchValues(imagePaths{i}, grayPatchRects, width, height);
 end
+
+% for i = 1:numImages
+%     fprintf('处理图像: %s\n', illuminantNames{i});
+%     
+%     % ======================================================
+%     % --- 新增的可视化代码开始 ---
+%     % 为了调试，读取并显示当前图像，并在其上绘制定义的矩形框
+%     
+%     img_for_display = imread(imagePaths{i});
+%     
+%     figure; % 为每一张校准图创建一个新的图形窗口
+%     imshow(img_for_display);
+%     hold on;
+%     
+%     % 设置标题，方便辨认
+%     title(['调试视图: ' illuminantNames{i} ' - 灰色块选区'], 'FontSize', 14);
+%     
+%     % 循环遍历所有灰色块的定义，并用红色虚线框画出来
+%     for j = 1:length(grayPatchRects)
+%         rectangle('Position', grayPatchRects{j}, ...
+%                   'EdgeColor', 'r', ...      % 框的颜色为红色
+%                   'LineWidth', 2, ...         % 线宽为2
+%                   'LineStyle', '--');       % 线型为虚线
+%     end
+%     
+%     hold off;
+%     drawnow; % 强制MATLAB立即更新并显示图像窗口
+%     
+%     % --- 新增的可视化代码结束 ---
+%     % ======================================================
+% 
+%     % 调用函数提取白点值的代码保持不变
+%     whitePoints(i, :) = extractGrayPatchValues(imagePaths{i}, grayPatchRects);
+% end
 
 fprintf('白点提取完成。\n');
 disp('提取到的各光源下的白点 (R, G, B):');
